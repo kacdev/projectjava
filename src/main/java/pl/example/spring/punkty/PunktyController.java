@@ -18,6 +18,7 @@ public class PunktyController {
     //private StudentService service = new StudentService(repository);
 
 
+
     @RequestMapping(value = "/students", method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Student> getUsers(){
@@ -30,5 +31,12 @@ public class PunktyController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public Student addUser(@RequestBody NewStudent student){
         return this.service.addStudent(student);
+    }
+
+
+    @RequestMapping(value="/students/{id}/number/{number}",method = RequestMethod.POST)
+    public Student setNumber(@PathVariable("id") long id, @PathVariable("number") String number){
+        return this.service.changeNumber(id, number).orElseThrow(
+                () -> new IllegalArgumentException("Student o id: " + id + " does not exist") );
     }
 }

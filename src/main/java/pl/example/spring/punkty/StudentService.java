@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import pl.example.spring.punkty.db.StudentRepozytory;
 import pl.example.spring.punkty.db.StudentRow;
 
+import javax.transaction.Transactional;
+import java.util.Optional;
 import java.util.function.Function;
 
 @Service
@@ -32,5 +34,15 @@ public class StudentService {
                 newStudent.number,
                 newStudent.grupa)).toStudent();
     }
-}
+
+    @Transactional
+    public Optional<Student> changeNumber(long studentId, String newNumber) {
+        final Optional<StudentRow> student =
+                this.repository.findById(studentId);
+        return student.map(c -> {
+            c.setNumber(newNumber);
+            repository.save(c);
+            return c.toStudent();
+        });
+    }}
 
