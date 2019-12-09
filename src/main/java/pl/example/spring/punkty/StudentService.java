@@ -3,33 +3,36 @@ package pl.example.spring.punkty;
 
 import io.vavr.collection.List;
 import org.springframework.stereotype.Service;
+import pl.example.spring.punkty.db.ScoreRepository;
+import pl.example.spring.punkty.db.ScoreRow;
 import pl.example.spring.punkty.db.StudentRepozytory;
 import pl.example.spring.punkty.db.StudentRow;
 
 import javax.transaction.Transactional;
 import java.util.Optional;
-import java.util.function.Function;
 
 @Service
 public class StudentService {
-    private final StudentRepozytory repository;
+    private final StudentRepozytory studentRepository;
+    private final ScoreRepository scoreRepository;
     private List<Student> students = List.empty();
 
-    public StudentService(StudentRepozytory repository) {
-        this.repository = repository;
+    public StudentService(StudentRepozytory repository, ScoreRepository scoreRepository) {
+        this.studentRepository = repository;
+        this.scoreRepository = scoreRepository;
     }
 
 
 
     List<Student> getStudents() {
-        return List.ofAll(this.repository.findAll())
+        return List.ofAll(this.studentRepository.findAll())
                 .map(StudentRow::toStudent);
     }
 
 
 
     public Student addStudent(final NewStudent newStudent) {
-        return this.repository.save(new StudentRow(
+        return this.studentRepository.save(new StudentRow(
                 newStudent.name,
                 newStudent.number,
                 newStudent.grupa)).toStudent();
@@ -38,11 +41,23 @@ public class StudentService {
     @Transactional
     public Optional<Student> changeNumber(long studentId, String newNumber) {
         final Optional<StudentRow> student =
-                this.repository.findById(studentId);
+                this.studentRepository.findById(studentId);
         return student.map(c -> {
             c.setNumber(newNumber);
-            repository.save(c);
+            studentRepository.save(c);
             return c.toStudent();
         });
-    }}
+    }
+
+    @Transactional
+    public  Optional<Integer> addScore(final long studentId, final Score score) {
+        final Optional<StudentRow> student =
+                this.studentRepository.findById(studentId);
+        return student.map(c->{int existingScore=List.ofAll(c.getScores())
+                .foldLeft(0,(p,s)->p+s.getScore());
+            final ScoreRow newScore=new ScoreRow(score.score,score.comment,c);
+            this.scoreRepository.save(newScore);
+            return existingScore+score.score;});}
+
+}
 
